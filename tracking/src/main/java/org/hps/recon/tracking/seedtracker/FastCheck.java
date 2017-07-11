@@ -394,6 +394,10 @@ public class FastCheck {
         double rc = Math.sqrt(xc * xc + yc * yc);
         double rcurv = circle.radius();
 
+        // pT cut
+        if (rcurv < _RMin)
+            return false;
+
         //  Find the point of closest approach
         double x0 = xc * (1. - rcurv / rc);
         double y0 = yc * (1. - rcurv / rc);
@@ -451,12 +455,8 @@ public class FastCheck {
         double z0 = z[0] - s[0] * slope;
         double zpred = z0 + s[1] * slope;
 
-        // momentum cut
+        //  Add multiple scattering error
         double pEstimate = estimateMomentum(slope, rcurv);
-        if (pEstimate < _strategy.getMinPT())
-            return false;
-
-        //  Add multiple scattering error here
         double mserr = calculateMSerror(p[0][0], p[1][0], p[2][0], pEstimate);
         dztot += _nsig * mserr;
 
