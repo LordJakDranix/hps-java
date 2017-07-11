@@ -464,7 +464,6 @@ public class FastCheck {
         if (Math.abs(zpred - z[1]) > dztot)
             return false;
 
-        System.out.printf("pEstimate %f minPT %f\n", pEstimate, _strategy.getMinPT());
         //  Passed all checks - success!
         return true;
     }
