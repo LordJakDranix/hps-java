@@ -319,7 +319,6 @@ public class FastCheck {
         double dztot = 0.;
         int indx;
         HelicalTrackHit hit;
-        boolean zfirst = true;
 
         // construct p and z arrays based on hit position x order
         // function for dztot(hit)
@@ -337,7 +336,6 @@ public class FastCheck {
         if (hit instanceof HelicalTrack3DHit)
             dztot += _nsig * ((HelicalTrack3DHit) hit).dz();
         else {
-            zfirst = false;
             if (hit instanceof HelicalTrack2DHit)
                 dztot += ((HelicalTrack2DHit) hit).zlen() / 2.;
             else
@@ -355,7 +353,6 @@ public class FastCheck {
         if (hit instanceof HelicalTrack3DHit)
             dztot += _nsig * ((HelicalTrack3DHit) hit).dz();
         else {
-            zfirst = false;
             if (hit instanceof HelicalTrack2DHit)
                 dztot += ((HelicalTrack2DHit) hit).zlen() / 2.;
             else
@@ -373,20 +370,17 @@ public class FastCheck {
         if (hit instanceof HelicalTrack3DHit)
             dztot += _nsig * ((HelicalTrack3DHit) hit).dz();
         else {
-            zfirst = false;
             if (hit instanceof HelicalTrack2DHit)
                 dztot += ((HelicalTrack2DHit) hit).zlen() / 2.;
             else
                 dztot += _nsig * Math.sqrt(hit.getCovMatrix()[5]);
         }
 
-        //  Unless the three hits are all pixel hits, do the circle checks first
-        if (!zfirst) {
-            if (!TwoPointCircleCheck(hit1, hit3, null))
-                return false;
-            if (!TwoPointCircleCheck(hit2, hit3, null))
-                return false;
-        }
+        //  Do the 2-pt circle checks first
+        if (!TwoPointCircleCheck(hit1, hit3, null))
+            return false;
+        if (!TwoPointCircleCheck(hit2, hit3, null))
+            return false;
 
         //  Do the 3 point circle fit and check for success
         boolean success = _cfit3.fit(p[0], p[1], p[2]);
@@ -459,8 +453,8 @@ public class FastCheck {
 
         // momentum cut
         double pEstimate = estimateMomentum(slope, rcurv);
-        //        if (pEstimate < _strategy.getMinPT())
-        //            return false;
+        if (pEstimate < _strategy.getMinPT())
+            return false;
 
         //  Add multiple scattering error here
         double mserr = calculateMSerror(p[0][0], p[1][0], p[2][0], pEstimate);
@@ -470,14 +464,7 @@ public class FastCheck {
         if (Math.abs(zpred - z[1]) > dztot)
             return false;
 
-        //  If we haven't already done the circle checks, do them now
-        if (zfirst) {
-            if (!TwoPointCircleCheck(hit1, hit3, null))
-                return false;
-            if (!TwoPointCircleCheck(hit2, hit3, null))
-                return false;
-        }
-
+        System.out.printf("pEstimate %f minPT %f\n", pEstimate, _strategy.getMinPT());
         //  Passed all checks - success!
         return true;
     }
