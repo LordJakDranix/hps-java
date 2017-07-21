@@ -1,5 +1,11 @@
 package org.hps.recon.tracking.seedtracker;
 
+import hep.physics.matrix.SymmetricMatrix;
+import hep.physics.vec.BasicHep3Vector;
+import hep.physics.vec.Hep3Vector;
+
+import java.util.List;
+
 import org.lcsim.constants.Constants;
 import org.lcsim.fit.threepointcircle.CircleFit;
 import org.lcsim.fit.helicaltrack.HelicalTrack2DHit;
@@ -7,6 +13,10 @@ import org.lcsim.fit.helicaltrack.HelicalTrack3DHit;
 import org.lcsim.fit.helicaltrack.HelicalTrackCross;
 import org.lcsim.fit.helicaltrack.HelicalTrackFit;
 import org.lcsim.fit.helicaltrack.HelicalTrackHit;
+import org.lcsim.fit.helicaltrack.HelicalTrackStrip;
+import org.lcsim.fit.helicaltrack.HelixUtils;
+import org.lcsim.fit.helicaltrack.HitUtils;
+import org.lcsim.fit.helicaltrack.TrackDirection;
 import org.lcsim.fit.threepointcircle.ThreePointCircleFitter;
 import org.lcsim.fit.twopointcircle.TwoPointCircleFit;
 import org.lcsim.fit.twopointcircle.TwoPointCircleFitter;
@@ -595,7 +605,37 @@ public class FastCheck {
             if (seed != null)
                 helix = seed.getHelix();
             cross.setTrackDirection(helix);
+
+            if (helix != null) {
+                TrackDirection trkdir = HelixUtils.CalculateTrackDirection(helix, helix.PathMap().get(hit));
+                SymmetricMatrix hcov = helix.covariance();
+                List<HelicalTrackStrip> htcStrips = cross.getStrips();
+                Hep3Vector poscor = HitUtils.PositionOnHelix(trkdir, htcStrips.get(0), htcStrips.get(1));
+                SymmetricMatrix covcor = HitUtils.CovarianceOnHelix(trkdir, hcov, htcStrips.get(0), htcStrips.get(1));
+                Hep3Vector pos = new BasicHep3Vector(hit.getPosition());
+                SymmetricMatrix cov = new SymmetricMatrix(3, hit.getCovMatrix(), true);
+                double _eps = 1e-2;
+                //  Check to make sure we have sane errors in r-phi, r, and z - problems can occur
+                //  if the track direction is nearly parallel to the sensor plane
+                boolean errok = (drphicalc(poscor, covcor) < drphicalc(pos, cov) + _eps) && (drcalc(poscor, covcor) < drcalc(pos, cov) + _eps) && (Math.sqrt(covcor.e(2, 2)) < Math.sqrt(cov.e(2, 2)) + _eps);
+                if (!errok)
+                    System.out.println("errok is false in FastCheck");
+            }
         }
+    }
+
+    private double drphicalc(Hep3Vector pos, SymmetricMatrix cov) {
+        double x = pos.x();
+        double y = pos.y();
+        double r2 = x * x + y * y;
+        return Math.sqrt((y * y * cov.e(0, 0) + x * x * cov.e(1, 1) - 2. * x * y * cov.e(0, 1)) / r2);
+    }
+
+    private double drcalc(Hep3Vector pos, SymmetricMatrix cov) {
+        double x = pos.x();
+        double y = pos.y();
+        double r2 = x * x + y * y;
+        return Math.sqrt((x * x * cov.e(0, 0) + y * y * cov.e(1, 1) + 2. * x * y * cov.e(0, 1)) / r2);
     }
 
     private double dz(HelicalTrackHit hit) {
