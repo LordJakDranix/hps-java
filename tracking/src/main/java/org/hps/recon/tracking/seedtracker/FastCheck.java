@@ -394,10 +394,6 @@ public class FastCheck {
         double rc = Math.sqrt(xc * xc + yc * yc);
         double rcurv = circle.radius();
 
-        // pT cut
-        if (rcurv < _RMin)
-            return false;
-
         //  Find the point of closest approach
         double x0 = xc * (1. - rcurv / rc);
         double y0 = yc * (1. - rcurv / rc);
