@@ -236,9 +236,7 @@ public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
         double rc = Math.sqrt(xc * xc + yc * yc);
         double rcurv = circle.radius();
 
-        // min pT cut
-        if (rcurv < super.getRMin())
-            return false;
+        // min pT cut would go here
 
         //  Find the point of closest approach
         double x0 = xc * (1. - rcurv / rc);
