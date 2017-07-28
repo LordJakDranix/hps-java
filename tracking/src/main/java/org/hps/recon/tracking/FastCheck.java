@@ -1,5 +1,6 @@
 package org.hps.recon.tracking;
 
+import org.lcsim.constants.Constants;
 import org.lcsim.fit.threepointcircle.CircleFit;
 import org.lcsim.fit.helicaltrack.HelicalTrack2DHit;
 import org.lcsim.fit.helicaltrack.HelicalTrack3DHit;
@@ -38,7 +39,7 @@ public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
     }
 
     private double estimateMomentum(double slope, double rcurve) {
-        return Math.sqrt(1 + slope * slope) * _bfield * rcurve;
+        return Math.sqrt(1 + slope * slope) * _bfield * Constants.fieldConversion * rcurve;
     }
 
     @Override
@@ -314,7 +315,6 @@ public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
         double z0 = z[0] - s[0] * slope;
         double zpred = z0 + s[1] * slope;
 
-        //  Add multiple scattering error here
         double pEstimate = estimateMomentum(slope, rcurv);
         double mserr = calculateMSerror(p[0][0], p[1][0], p[2][0], pEstimate);
         dztot += super.getNSig() * mserr;
