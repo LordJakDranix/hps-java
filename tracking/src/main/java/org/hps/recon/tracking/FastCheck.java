@@ -1,6 +1,7 @@
 package org.hps.recon.tracking;
 
 import org.lcsim.constants.Constants;
+
 import org.lcsim.fit.threepointcircle.CircleFit;
 import org.lcsim.fit.helicaltrack.HelicalTrack2DHit;
 import org.lcsim.fit.helicaltrack.HelicalTrack3DHit;
@@ -20,10 +21,16 @@ import org.lcsim.recon.tracking.seedtracker.diagnostic.ISeedTrackerDiagnostics;
 public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
 
     private double _bfield;
+    private double _nsig = 3;
 
     public FastCheck(SeedStrategy strategy, double bfield, ISeedTrackerDiagnostics diag) {
         super(strategy, bfield, diag);
         _bfield = bfield;
+    }
+
+    @Override
+    public double getNSig() {
+        return _nsig;
     }
 
     private double calculateMSerror(double hit1x, double hit2x, double hit3x, double p) {
@@ -141,8 +148,8 @@ public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
         }
 
         // Calculate the allowed variation in hit r and z (not 1 sigma errors!)
-        double dr1 = Math.max(super.getNSig() * hit1.dr(), super.getDMax());
-        double dr2 = Math.max(super.getNSig() * hit2.dr(), super.getDMax());
+        double dr1 = Math.max(_nsig * hit1.dr(), super.getDMax());
+        double dr2 = Math.max(_nsig * hit2.dr(), super.getDMax());
         double dz1 = dz(hit1);
         double dz2 = dz(hit2);
 
@@ -191,13 +198,13 @@ public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
         z[indx] = pos[2];
 
         if (hit instanceof HelicalTrack3DHit)
-            dztot += super.getNSig() * ((HelicalTrack3DHit) hit).dz();
+            dztot += _nsig * ((HelicalTrack3DHit) hit).dz();
         else {
             zfirst = false;
             if (hit instanceof HelicalTrack2DHit)
                 dztot += ((HelicalTrack2DHit) hit).zlen() / 2.;
             else
-                dztot += super.getNSig() * Math.sqrt(hit.getCovMatrix()[5]);
+                dztot += _nsig * Math.sqrt(hit.getCovMatrix()[5]);
         }
 
         //  Get the relevant variables for hit 2
@@ -209,13 +216,13 @@ public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
         z[indx] = pos[2];
 
         if (hit instanceof HelicalTrack3DHit)
-            dztot += super.getNSig() * ((HelicalTrack3DHit) hit).dz();
+            dztot += _nsig * ((HelicalTrack3DHit) hit).dz();
         else {
             zfirst = false;
             if (hit instanceof HelicalTrack2DHit)
                 dztot += ((HelicalTrack2DHit) hit).zlen() / 2.;
             else
-                dztot += super.getNSig() * Math.sqrt(hit.getCovMatrix()[5]);
+                dztot += _nsig * Math.sqrt(hit.getCovMatrix()[5]);
         }
 
         //  Get the relevant variables for hit 3
@@ -227,13 +234,13 @@ public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
         z[indx] = pos[2];
 
         if (hit instanceof HelicalTrack3DHit)
-            dztot += super.getNSig() * ((HelicalTrack3DHit) hit).dz();
+            dztot += _nsig * ((HelicalTrack3DHit) hit).dz();
         else {
             zfirst = false;
             if (hit instanceof HelicalTrack2DHit)
                 dztot += ((HelicalTrack2DHit) hit).zlen() / 2.;
             else
-                dztot += super.getNSig() * Math.sqrt(hit.getCovMatrix()[5]);
+                dztot += _nsig * Math.sqrt(hit.getCovMatrix()[5]);
         }
 
         //  Unless the three hits are all pixel hits, do the circle checks first
@@ -317,10 +324,11 @@ public class FastCheck extends org.lcsim.recon.tracking.seedtracker.FastCheck {
 
         double pEstimate = estimateMomentum(slope, rcurv);
         double mserr = calculateMSerror(p[0][0], p[1][0], p[2][0], pEstimate);
-        dztot += super.getNSig() * mserr;
+        dztot += _nsig * mserr;
+        double dzpred = Math.abs(zpred - z[1]);
 
         // comparison of middle z to prediction including error
-        if (Math.abs(zpred - z[1]) > dztot)
+        if (dzpred > dztot)
             return false;
 
         //  If we haven't already done the circle checks, do them now
